@@ -1,6 +1,8 @@
 /// Module: transcript
 module transcript::transcript {
 
+    use sui::event;
+
     public struct WrappableTranscript has key, store {
         id: UID,
         history: u8,
@@ -16,6 +18,16 @@ module transcript::transcript {
 
     public struct TeacherCap has key {
         id: UID
+    }
+
+    /// Event marking when a transcript has been requested
+    public struct TranscriptRequestEvent has copy, drop {
+        // The object ID of the trancript wrapper
+        wrapper_id: ID,
+        // The requested of the transcript,
+        requester: address,
+        // The intended address of the transcript
+        intended_address: address
     }
 
     // Error code for when a non-intended address tries to unpack the transcript wrapper
@@ -86,6 +98,12 @@ module transcript::transcript {
             transcript,
             intended_address
         };
+        event::emit(TranscriptRequestEvent {
+            wrapper_id: object::uid_to_inner(&folder.id),
+            requester: tx_context::sender(ctx),
+            intended_address
+        });
+        //We transfer the wrapped transcript object directly to the intended address
         transfer::transfer(folder, intended_address)
     }
 
@@ -101,5 +119,3 @@ module transcript::transcript {
         object::delete(id)
     }
 }
-// For Move coding conventions, see
-// https://docs.sui.io/concepts/sui-move-concepts/conventions
